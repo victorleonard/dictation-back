@@ -11,6 +11,8 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\State\UserPasswordHasher;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -56,6 +58,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(groups: ['user:create'])]
     #[Groups(['user:create', 'user:update'])]
     private ?string $plainPassword = null;
+
+    #[ORM\ManyToMany(targetEntity: Sentence::class, inversedBy: 'users')]
+    private Collection $sentenceLearned;
+
+    public function __construct()
+    {
+        $this->sentenceLearned = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -142,5 +152,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    /**
+     * @return Collection<int, Sentence>
+     */
+    public function getSentenceLearned(): Collection
+    {
+        return $this->sentenceLearned;
+    }
+
+    public function addSentenceLearned(Sentence $sentenceLearned): static
+    {
+        if (!$this->sentenceLearned->contains($sentenceLearned)) {
+            $this->sentenceLearned->add($sentenceLearned);
+        }
+
+        return $this;
+    }
+
+    public function removeSentenceLearned(Sentence $sentenceLearned): static
+    {
+        $this->sentenceLearned->removeElement($sentenceLearned);
+
+        return $this;
     }
 }
