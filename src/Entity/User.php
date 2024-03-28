@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Controller\UserMeController;
+use App\Controller\UserMeSentenceController;
 use App\State\UserPasswordHasher;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -35,8 +36,16 @@ use Symfony\Component\Validator\Constraints as Assert;
             validate: false
         ),
         new Get(),
-        new Put(processor: UserPasswordHasher::class),
         new Patch(processor: UserPasswordHasher::class),
+        new Put(
+            name: 'newLearnedSentence',
+            uriTemplate: '/users/me/sentence/{id}',
+            controller: UserMeSentenceController::class,
+            read: false,
+            write: false,
+            validate: false
+        ),
+        new Put(processor: UserPasswordHasher::class),
         new Delete(),
     ],
     normalizationContext: ['groups' => ['user:read']],
