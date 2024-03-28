@@ -2,42 +2,39 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
-use App\Repository\SentenceRepository;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-class UserMeSentenceController extends AbstractController
+class UserMeWordsController extends AbstractController
 {
-    private $sentenceRepo;
     private $userRepo;
-    private $em;
 
     public function __construct(
         private Security $security,
-        SentenceRepository $sentenceRepo,
-        UserRepository $userRepo,
-        EntityManagerInterface $em
+        UserRepository $userRepo
     ) {
         $this->userRepo = $userRepo;
-        $this->sentenceRepo = $sentenceRepo;
-        $this->em = $em;
     }
-    public function __invoke($id)
+    public function __invoke()
     {
         $userAuth = $this->security->getUser();
         if (!$userAuth) {
             $errorMessage = (object) array('message' => 'Invalid credentials.');
             return new JsonResponse(json_encode($errorMessage), Response::HTTP_BAD_REQUEST, [], true);
         }
-        $sentence = $this->sentenceRepo->findOneBy(['id' => $id]);
-        $sentence->addUser($userAuth);
-        $this->em->persist($sentence);
-        $this->em->flush();
-        return 'ok';
+        $user = $this->userRepo->findOneBy(['id' => $userAuth->getId()]);
+        $words = $user->getWordLearned();
+        $wordsData = [];
+        foreach($words as $word) {
+            $wordsData[] = [
+                'id' => $word->getId(),
+                'value' => $word->getValue(),
+                'level' => $word->getLevel()
+            ];
+        }
+        return $wordsData;
     }
 }

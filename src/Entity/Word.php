@@ -3,19 +3,21 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
-use App\Repository\SentenceRepository;
+use App\Repository\WordRepository;
+use Symfony\Component\Uid\UuidV7 as Uuid;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: SentenceRepository::class)]
+#[ORM\Entity(repositoryClass: WordRepository::class)]
 #[ApiResource]
-class Sentence
+class Word
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: 'uuid', unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $value = null;
@@ -23,7 +25,7 @@ class Sentence
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $level = null;
 
-    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'sentenceLearned')]
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'wordLearned')]
     private Collection $users;
 
     public function __construct()
@@ -31,7 +33,7 @@ class Sentence
         $this->users = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }
@@ -72,7 +74,7 @@ class Sentence
     {
         if (!$this->users->contains($user)) {
             $this->users->add($user);
-            $user->addSentenceLearned($this);
+            $user->addWordLearned($this);
         }
 
         return $this;
@@ -81,7 +83,7 @@ class Sentence
     public function removeUser(User $user): static
     {
         if ($this->users->removeElement($user)) {
-            $user->removeSentenceLearned($this);
+            $user->removeWordLearned($this);
         }
 
         return $this;

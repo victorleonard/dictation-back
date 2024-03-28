@@ -10,8 +10,8 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Controller\UserMeController;
-use App\Controller\UserMeSentenceController;
-use App\Controller\UserMeSentencesController;
+use App\Controller\UserMeWordController;
+use App\Controller\UserMeWordsController;
 use App\State\UserPasswordHasher;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -21,6 +21,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Uid\UuidV7 as Uuid;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
@@ -37,16 +38,19 @@ use Symfony\Component\Validator\Constraints as Assert;
             validate: false
         ),
         new GetCollection(
-            name: 'getmeSentences',
-            uriTemplate: '/users/me/sentences',
-            controller: UserMeSentencesController::class
+            name: 'getMeWords',
+            uriTemplate: '/users/me/words',
+            controller: UserMeWordsController::class,
+            read: false,
+            write: false,
+            validate: false
         ),
         new Get(),
         new Patch(processor: UserPasswordHasher::class),
         new Put(
-            name: 'newLearnedSentence',
-            uriTemplate: '/users/me/sentence/{id}',
-            controller: UserMeSentenceController::class,
+            name: 'newLearnedWord',
+            uriTemplate: '/users/me/word/{id}',
+            controller: UserMeWordController::class,
             read: false,
             write: false,
             validate: false
@@ -61,9 +65,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[Groups(['user:read'])]
     #[ORM\Id]
-    #[ORM\Column(type: 'integer')]
-    #[ORM\GeneratedValue]
-    private ?int $id = null;
+    #[ORM\Column(type: 'uuid', unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    private ?Uuid $id = null;
 
     #[Assert\NotBlank]
     #[Groups(['user:read', 'user:create', 'user:update'])]
@@ -83,15 +88,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:create', 'user:update'])]
     private ?string $plainPassword = null;
 
-    #[ORM\ManyToMany(targetEntity: Sentence::class, inversedBy: 'users')]
-    private Collection $sentenceLearned;
+    #[ORM\ManyToMany(targetEntity: Word::class, inversedBy: 'users')]
+    private Collection $wordLearned;
 
     public function __construct()
     {
-        $this->sentenceLearned = new ArrayCollection();
+        $this->wordLearned = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }
@@ -179,25 +184,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, Sentence>
+     * @return Collection<int, Word>
      */
-    public function getSentenceLearned(): Collection
+    public function getWordLearned(): Collection
     {
-        return $this->sentenceLearned;
+        return $this->wordLearned;
     }
 
-    public function addSentenceLearned(Sentence $sentenceLearned): static
+    public function addWordLearned(Word $wordLearned): static
     {
-        if (!$this->sentenceLearned->contains($sentenceLearned)) {
-            $this->sentenceLearned->add($sentenceLearned);
+        if (!$this->wordLearned->contains($wordLearned)) {
+            $this->wordLearned->add($wordLearned);
         }
 
         return $this;
     }
 
-    public function removeSentenceLearned(Sentence $sentenceLearned): static
+    public function removeWordLearned(Word $wordLearned): static
     {
-        $this->sentenceLearned->removeElement($sentenceLearned);
+        $this->wordLearned->removeElement($wordLearned);
 
         return $this;
     }
