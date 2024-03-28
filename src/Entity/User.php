@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Controller\UserMeController;
 use App\Controller\UserMeSentenceController;
+use App\Controller\UserMeSentencesController;
 use App\State\UserPasswordHasher;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -34,6 +35,11 @@ use Symfony\Component\Validator\Constraints as Assert;
             read: false,
             write: false,
             validate: false
+        ),
+        new GetCollection(
+            name: 'getmeSentences',
+            uriTemplate: '/users/me/sentences',
+            controller: UserMeSentencesController::class
         ),
         new Get(),
         new Patch(processor: UserPasswordHasher::class),
