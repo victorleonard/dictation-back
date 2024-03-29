@@ -3,14 +3,40 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Repository\WordRepository;
 use Symfony\Component\Uid\UuidV7 as Uuid;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use App\Controller\WordsRandomController;
 
 #[ORM\Entity(repositoryClass: WordRepository::class)]
-#[ApiResource]
+#[ApiResource(
+        operations: [
+        new GetCollection(
+            name: 'getRandomWords',
+            uriTemplate: '/words/random',
+            controller: WordsRandomController::class,
+            read: false,
+            write: false,
+            validate: false
+            ),
+        new GetCollection(),
+        new Get(),
+        new Patch(),
+        new Put(),
+        new Delete(),
+        ]
+)]
+#[ApiFilter(SearchFilter::class, properties: ['users.username' => 'exact'])]
 class Word
 {
     #[ORM\Id]
