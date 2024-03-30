@@ -10,12 +10,11 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Repository\WordRepository;
+use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Uid\UuidV7 as Uuid;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Metadata\ApiFilter;
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use App\Controller\WordsRandomController;
 
 #[ORM\Entity(repositoryClass: WordRepository::class)]
@@ -33,10 +32,10 @@ use App\Controller\WordsRandomController;
         new Get(),
         new Patch(),
         new Put(),
+        new Post(),
         new Delete(),
         ]
 )]
-#[ApiFilter(SearchFilter::class, properties: ['users.username' => 'exact'])]
 class Word
 {
     #[ORM\Id]
@@ -45,7 +44,7 @@ class Word
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     private ?Uuid $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $value = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -54,11 +53,14 @@ class Word
     #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'wordLearned')]
     private Collection $users;
 
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $createdAt = null;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
+        $this->createdAt = new \DateTime();
     }
-
     public function getId(): ?Uuid
     {
         return $this->id;
@@ -111,6 +113,18 @@ class Word
         if ($this->users->removeElement($user)) {
             $user->removeWordLearned($this);
         }
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(?\DateTimeInterface $createdAt): static
+    {
+        $this->createdAt = $createdAt;
 
         return $this;
     }
