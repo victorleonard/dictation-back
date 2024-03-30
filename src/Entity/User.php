@@ -17,6 +17,7 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -65,7 +66,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[Groups(['user:read'])]
     #[ORM\Id]
-    #[ORM\Column(type: 'uuid', unique: true)]
+    #[ORM\Column(type: UuidType::NAME, unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     private ?Uuid $id = null;
@@ -91,9 +92,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: Word::class, inversedBy: 'users')]
     private Collection $wordLearned;
 
+    #[ORM\OneToMany(targetEntity: WordError::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $wordErrors;
+
     public function __construct()
     {
         $this->wordLearned = new ArrayCollection();
+        $this->wordErrors = new ArrayCollection();
     }
 
     public function getId(): ?Uuid
@@ -206,4 +211,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, WordError>
+     */
+    public function getWordErrors(): Collection
+    {
+        return $this->wordErrors;
+    }
+
+    public function addWordError(WordError $wordError): static
+    {
+        if (!$this->wordErrors->contains($wordError)) {
+            $this->wordErrors->add($wordError);
+            $wordError->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWordError(WordError $wordError): static
+    {
+        if ($this->wordErrors->removeElement($wordError)) {
+            // set the owning side to null (unless already changed)
+            if ($wordError->getUser() === $this) {
+                $wordError->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
 }

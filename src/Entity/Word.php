@@ -56,10 +56,14 @@ class Word
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
 
+    #[ORM\OneToMany(targetEntity: WordError::class, mappedBy: 'word', orphanRemoval: true)]
+    private Collection $wordErrors;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
         $this->createdAt = new \DateTime();
+        $this->wordErrors = new ArrayCollection();
     }
     public function getId(): ?Uuid
     {
@@ -125,6 +129,36 @@ class Word
     public function setCreatedAt(?\DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, WordError>
+     */
+    public function getWordErrors(): Collection
+    {
+        return $this->wordErrors;
+    }
+
+    public function addWordError(WordError $wordError): static
+    {
+        if (!$this->wordErrors->contains($wordError)) {
+            $this->wordErrors->add($wordError);
+            $wordError->setWord($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWordError(WordError $wordError): static
+    {
+        if ($this->wordErrors->removeElement($wordError)) {
+            // set the owning side to null (unless already changed)
+            if ($wordError->getWord() === $this) {
+                $wordError->setWord(null);
+            }
+        }
 
         return $this;
     }
