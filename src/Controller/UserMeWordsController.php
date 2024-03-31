@@ -35,6 +35,10 @@ class UserMeWordsController extends AbstractController
                 'level' => $word->getLevel()
             ];
         }
+        usort($wordsData, function ($a, $b) {
+            return strcmp($a['value'], $b['value']);
+        });
+
         return $wordsData;
     }
 }
