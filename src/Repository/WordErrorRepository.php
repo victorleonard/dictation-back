@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\WordError;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bridge\Doctrine\Types\UuidType;
 
 /**
  * @extends ServiceEntityRepository<WordError>
@@ -19,6 +20,27 @@ class WordErrorRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, WordError::class);
+    }
+
+    /**
+     * Récupère une entrée aléatoire de la table des mots qui n'a pas été apprise par l'utilisateur courant.
+     *
+     * @return Word|null
+     */
+    public function findErrorByUser($id)
+    {
+        $queryBuilder = $this->createQueryBuilder('w');
+        $queryBuilder->leftJoin('w.user', 'u');
+        $queryBuilder->andWhere('u.id = :userId');
+        $queryBuilder->setParameter('userId', $id, UuidType::NAME);
+
+        $words = $queryBuilder->getQuery()->getResult();
+
+        if (!empty($words)) {
+            return $words;
+        }
+
+        return null; // Aucun mot disponible pour l'utilisateur actuel
     }
 
     //    /**

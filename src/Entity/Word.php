@@ -16,6 +16,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use App\Controller\WordsRandomController;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: WordRepository::class)]
 #[ApiResource(
@@ -45,6 +46,7 @@ class Word
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 255, unique: true)]
+    #[Groups(['wordError:read'])]
     private ?string $value = null;
 
     #[ORM\Column(length: 255, nullable: true)]
