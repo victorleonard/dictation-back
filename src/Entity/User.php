@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Controller\UserMeController;
+use App\Controller\UserMeVerbController;
 use App\Controller\UserMeWordController;
 use App\Controller\UserMeWordsController;
 use App\State\UserPasswordHasher;
@@ -56,6 +57,14 @@ use Symfony\Component\Uid\UuidV7 as Uuid;
             write: false,
             validate: false
         ),
+        new Put(
+            name: 'newLearnedWord',
+            uriTemplate: '/users/me/verb/{id}',
+            controller: UserMeVerbController::class,
+            read: false,
+            write: false,
+            validate: false
+        ),
         new Put(processor: UserPasswordHasher::class),
         new Delete(),
     ],
@@ -95,10 +104,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: WordError::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $wordErrors;
 
+    #[ORM\ManyToMany(targetEntity: Verb::class, mappedBy: 'user')]
+    private Collection $verbs;
+
     public function __construct()
     {
         $this->wordLearned = new ArrayCollection();
         $this->wordErrors = new ArrayCollection();
+        $this->verbs = new ArrayCollection();
     }
 
     public function getId(): ?Uuid
@@ -242,4 +255,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    /**
+     * @return Collection<int, Verb>
+     */
+    public function getVerbs(): Collection
+    {
+        return $this->verbs;
+    }
+
+    public function addVerb(Verb $verb): static
+    {
+        if (!$this->verbs->contains($verb)) {
+            $this->verbs->add($verb);
+            $verb->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeVerb(Verb $verb): static
+    {
+        if ($this->verbs->removeElement($verb)) {
+            $verb->removeUser($this);
+        }
+
+        return $this;
+    }
 }
